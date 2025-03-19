@@ -40,27 +40,19 @@ export interface ProxyItem {
 }
 
 export class BaserowAPI {
-  private async request<T>(options: RequestInit = {}): Promise<T> {
+  private async request<T>(): Promise<T> {
     try {
-      const response = await fetch(BASEROW_API_URL, {
-        ...options,
+      const response = await axios.get(BASEROW_API_URL, {
         headers: {
           'Authorization': `Token ${BASEROW_API_TOKEN}`,
           'Content-Type': 'application/json',
-          ...options.headers,
         },
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Baserow API request failed: ${response.status} ${response.statusText} - ${errorText}`);
-      }
-
-      const data = await response.json();
-      return data as T;
+      return response.data as T;
     } catch (error) {
       console.error('Baserow API request error:', error);
-      throw new Error(`Baserow API request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error('Failed to fetch data from Baserow');
     }
   }
 
@@ -101,32 +93,6 @@ export class BaserowAPI {
     } catch (error) {
       console.error('Error parsing proxy string:', error);
       return [];
-    }
-  }
-
-  async createProxy(data: {
-    name: string;
-    email: string;
-    notes: string;
-    active?: boolean;
-    pedido?: string;
-  }): Promise<void> {
-    try {
-      await this.request({
-        method: 'POST',
-        body: JSON.stringify({
-          Name: data.name,
-          Email: data.email,
-          Notes: data.notes,
-          Active: data.active ?? true,
-          Pedido: data.pedido,
-          Status: 'active',
-          Expiracao: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
-        }),
-      });
-    } catch (error) {
-      console.error('Error creating proxy:', error);
-      throw error;
     }
   }
 
@@ -201,28 +167,6 @@ export class BaserowAPI {
       return allProxies;
     } catch (error) {
       console.error('Error fetching user proxies:', error);
-      throw error;
-    }
-  }
-
-  async updateProxy(id: number, data: {
-    active?: boolean;
-    notes?: string;
-    status?: string;
-    expiracao?: string;
-  }): Promise<void> {
-    try {
-      await this.request({
-        method: 'PATCH',
-        body: JSON.stringify({
-          Active: data.active,
-          Notes: data.notes,
-          Status: data.status,
-          Expiracao: data.expiracao,
-        }),
-      });
-    } catch (error) {
-      console.error('Error updating proxy:', error);
       throw error;
     }
   }
